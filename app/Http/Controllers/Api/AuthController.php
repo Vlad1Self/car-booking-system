@@ -2,56 +2,53 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\DTOs\LogoutData;
 use App\Http\Controllers\Controller;
-use App\Models\User;
+use App\Http\Requests\Api\LoginRequest;
+use App\Http\Requests\Api\RegisterRequest;
+use App\Http\Resources\Api\UserResource;
+use App\Http\Responses\ApiResponse;
+use App\Services\Contracts\AuthServiceInterface;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Validator;
 
 class AuthController extends Controller
 {
-    public function login(Request $request)
+    public function __construct(
+        protected AuthServiceInterface $authService
+    ) {}
+
+    public function register(RegisterRequest $request): JsonResponse
     {
-        $validator = Validator::make($request->all(), [
-            'email' => 'required|email',
-            'password' => 'required',
-            'device_name' => 'nullable|string',
-        ]);
+        $result = $this->authService->register($request->getDTO());
 
-        if ($validator->fails()) {
-            return response()->json([
-                'errors' => $validator->errors()
-            ], 422);
-        }
-
-        $user = User::where('email', $request->email)->first();
-
-        if (!$user || !Hash::check($request->password, $user->password)) {
-            return response()->json([
-                'message' => 'Неверный email или пароль'
-            ], 401);
-        }
-
-        $deviceName = $request->input('device_name', 'web_app');
-        $token = $user->createToken($deviceName)->plainTextToken;
-
-        return response()->json([
-            'token' => $token,
-            'user' => [
-                'id' => $user->id,
-                'name' => $user->name,
-                'email' => $user->email,
-                'position' => $user->position ? $user->position->name : null,
-            ]
-        ]);
+        return ApiResponse::success([
+            'token' => $result['token'],
+            'user' => new UserResource($result['user']),
+        ], message: 'Регистрация успешна');
     }
 
-    public function logout(Request $request)
+    public function login(LoginRequest $request): JsonResponse
     {
-        $request->user()->currentAccessToken()->delete();
+        $result = $this->authService->login($request->getDTO());
 
-        return response()->json([
-            'message' => 'Успешный выход'
-        ]);
+        if (!$result) {
+            return ApiResponse::error(401, 'Неверный email или пароль');
+        }
+
+        return ApiResponse::success([
+            'token' => $result['token'],
+            'user' => new UserResource($result['user']),
+        ], message: 'Авторизация успешна');
+    }
+
+    public function logout(Request $request): JsonResponse
+    {
+        $this->authService->logout(LogoutData::from([
+            'user' => $request->user(),
+            'all_devices' => $request->boolean('all_devices'),
+        ]));
+
+        return ApiResponse::success(message: 'Успешный выход');
     }
 }

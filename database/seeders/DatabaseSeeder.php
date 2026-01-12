@@ -9,7 +9,13 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call([
-            CarDataSeeder::class,
+            ComfortCategorySeeder::class,
+            PositionSeeder::class,
+            UserSeeder::class,
+            DriverSeeder::class,
+            CarModelSeeder::class,
+            CarSeeder::class,
+            TripSeeder::class,
         ]);
     }
 }

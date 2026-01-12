@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -28,12 +29,10 @@ class Car extends Model
     {
         return $this->belongsTo(CarModel::class);
     }
-
     public function driver()
     {
         return $this->belongsTo(Driver::class);
     }
-
     public function trips()
     {
         return $this->hasMany(Trip::class);
@@ -44,30 +43,26 @@ class Car extends Model
         return "{$this->carModel->brand} {$this->carModel->name} ({$this->license_plate})";
     }
 
-    public function scopeAvailableBetween($query, $startTime, $endTime)
+    public function scopeActive(Builder $query)
     {
-        return $query->whereDoesntHave('trips', function ($q) use ($startTime, $endTime) {
-            $q->where(function ($query) use ($startTime, $endTime) {
-                $query->whereBetween('start_time', [$startTime, $endTime])
-                    ->orWhereBetween('end_time', [$startTime, $endTime])
-                    ->orWhere(function ($q) use ($startTime, $endTime) {
-                        $q->where('start_time', '<=', $startTime)
-                            ->where('end_time', '>=', $endTime);
-                    });
+        return $query->where('is_active', true);
+    }
+
+    public function scopeAvailableBetween(Builder $query, $start, $end)
+    {
+        return $query->whereDoesntHave('trips', function ($q) use ($start, $end) {
+            $q->where(function ($sub) use ($start, $end) {
+                $sub->whereBetween('start_time', [$start, $end])
+                    ->orWhereBetween('end_time', [$start, $end])
+                    ->orWhere(fn($sq) => $sq->where('start_time', '<=', $start)->where('end_time', '>=', $end));
             })->whereIn('status', ['planned', 'in_progress']);
         });
     }
 
-    public function scopeAvailableForUser($query, $user)
+    public function scopeForUser(Builder $query, User $user)
     {
-        if (!$user->position || $user->availableComfortCategories->isEmpty()) {
-            return $query->whereRaw('1 = 0');
-        }
-
-        $availableCategoryIds = $user->availableComfortCategories->pluck('id');
-
-        return $query->whereHas('carModel', function ($q) use ($availableCategoryIds) {
-            $q->whereIn('comfort_category_id', $availableCategoryIds);
+        return $query->whereHas('carModel', function ($q) use ($user) {
+            $q->whereIn('comfort_category_id', $user->available_comfort_categories->pluck('id'));
         });
     }
 }
