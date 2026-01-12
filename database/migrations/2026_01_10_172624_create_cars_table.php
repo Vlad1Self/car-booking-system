@@ -14,7 +14,7 @@ return new class extends Migration
             $table->string('color')->nullable();
             $table->integer('year');
             $table->foreignId('car_model_id')->constrained();
-            $table->foreignId('driver_id')->constrained();
+            $table->foreignId('driver_id')->unique()->constrained();
             $table->boolean('is_active')->default(true);
             $table->json('features')->nullable();
             $table->timestamps();

@@ -37,7 +37,8 @@ class CarApiTest extends TestCase
             'position_id' => $position->id,
         ]);
 
-        $driver = Driver::create(['name' => 'Driver 1', 'phone' => '123']);
+        $driver1 = Driver::create(['name' => 'Driver 1', 'phone' => '123']);
+        $driver2 = Driver::create(['name' => 'Driver 2', 'phone' => '456']);
 
         $modelBus = CarModel::create(['name' => 'Camry', 'brand' => 'Toyota', 'comfort_category_id' => $this->businessCategory->id]);
         $modelEco = CarModel::create(['name' => 'Solaris', 'brand' => 'Hyundai', 'comfort_category_id' => $economyCategory->id]);
@@ -45,7 +46,7 @@ class CarApiTest extends TestCase
         $this->availableCar = Car::create([
             'license_plate' => 'BUS001',
             'car_model_id' => $modelBus->id,
-            'driver_id' => $driver->id,
+            'driver_id' => $driver1->id,
             'year' => 2023,
             'color' => 'Black',
             'is_active' => true,
@@ -54,7 +55,7 @@ class CarApiTest extends TestCase
         Car::create([
             'license_plate' => 'ECO001',
             'car_model_id' => $modelEco->id,
-            'driver_id' => $driver->id,
+            'driver_id' => $driver2->id,
             'year' => 2022,
             'color' => 'White',
             'is_active' => true,
