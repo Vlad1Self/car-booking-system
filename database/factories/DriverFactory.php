@@ -14,6 +14,7 @@ class DriverFactory extends Factory
         return [
             'name' => $this->faker->name(),
             'phone' => $this->faker->phoneNumber(),
+            'is_active' => true,
         ];
     }
 
@@ -22,7 +23,9 @@ class DriverFactory extends Factory
         return $this->sequence(
             ['name' => 'Иван Иванов', 'phone' => '+79991234567'],
             ['name' => 'Петр Петров', 'phone' => '+79997654321'],
-            ['name' => 'Сергей Сергеев', 'phone' => '+79999876543'],
+            ['name' => 'Сергей Сергеев', 'phone' => '+79990001122'],
+            ['name' => 'Алексей Алексеев', 'phone' => '+79995554433'],
+            ['name' => 'Дмитрий Дмитриев', 'phone' => '+79998887766'],
         );
     }
 }
