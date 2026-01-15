@@ -7,6 +7,7 @@ use App\DTOs\LoginData;
 use App\DTOs\RegisterData;
 use App\DTOs\LogoutData;
 use App\Services\Contracts\AuthServiceInterface;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Laravel\Sanctum\PersonalAccessToken;
 
@@ -14,19 +15,23 @@ class AuthService implements AuthServiceInterface
 {
     public function register(RegisterData $data): array
     {
-        $user = User::create([
-            'name' => $data->name,
-            'email' => $data->email,
-            'password' => Hash::make($data->password),
-            'position_id' => $data->position_id,
-        ]);
+        return DB::transaction(function () use ($data) {
+            $user = User::create([
+                'name' => $data->name,
+                'email' => $data->email,
+                'password' => Hash::make($data->password),
+                'position_id' => $data->position_id,
+            ]);
 
-        $token = $user->createToken($data->device_name ?? 'web_app')->plainTextToken;
+            $token = $user
+                ->createToken($data->device_name ?? 'web_app')
+                ->plainTextToken;
 
-        return [
-            'token' => $token,
-            'user' => $user,
-        ];
+            return [
+                'token' => $token,
+                'user' => $user,
+            ];
+        });
     }
 
     public function login(LoginData $data): ?array
